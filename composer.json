@@ -1,0 +1,25 @@
+{
+    "name": "saranatechnology/sarana-php",
+    "description": "PHP client for the Sarana payment API",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["sarana", "payment", "xendit", "qris", "virtual-account", "indonesia"],
+    "authors": [{ "name": "Sarana Technology" }],
+    "require": {
+        "php": ">=7.4",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
+    },
+    "autoload": {
+        "psr-4": { "Sarana\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "Sarana\\Tests\\": "tests/" }
+    },
+    "scripts": {
+        "test": "phpunit tests"
+    }
+}
