@@ -7,14 +7,12 @@ namespace Sarana;
 /** Thrown for every non-2xx response. Status 0 = network error. */
 final class SaranaException extends \RuntimeException
 {
-    private int $status;
-    private string $body;
-
-    public function __construct(int $status, string $message, string $body)
-    {
+    public function __construct(
+        private readonly int $status,
+        string $message,
+        private readonly string $body,
+    ) {
         parent::__construct('Sarana HTTP ' . $status . ': ' . $message, $status);
-        $this->status = $status;
-        $this->body = $body;
     }
 
     public function getStatus(): int
