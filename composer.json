@@ -6,12 +6,12 @@
     "keywords": ["sarana", "payment", "xendit", "qris", "virtual-account", "indonesia"],
     "authors": [{ "name": "Sarana Technology" }],
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.2",
         "ext-curl": "*",
         "ext-json": "*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.6"
+        "phpunit/phpunit": "^11.5"
     },
     "autoload": {
         "psr-4": { "Sarana\\": "src/" }
@@ -19,7 +19,12 @@
     "autoload-dev": {
         "psr-4": { "Sarana\\Tests\\": "tests/" }
     },
+    "config": {
+        "sort-packages": true,
+        "audit": { "abandoned": "fail" }
+    },
     "scripts": {
-        "test": "phpunit tests"
+        "test": "phpunit tests",
+        "audit": "@composer audit"
     }
 }

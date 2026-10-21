@@ -103,4 +103,79 @@ final class ClientTest extends TestCase
         self::assertSame('S', $cb['sub_ref']);
         unset($_SERVER['HTTP_X_SUB_CLIENT']);
     }
+
+    public function testRejectsHeaderInjection(): void
+    {
+        $c = $this->client(200, '{"success":true,"data":{}}');
+        foreach (["OUTLET\r\nX-API-Key: other", "a\nb", "a\0b", ''] as $bad) {
+            try {
+                $c->forSubRef($bad);
+                self::fail('expected InvalidArgumentException for ' . json_encode($bad));
+            } catch (\InvalidArgumentException $e) {
+                self::assertStringContainsString('sub_ref', $e->getMessage());
+            }
+        }
+
+        $this->expectException(\InvalidArgumentException::class);
+        new Client("sk_test\r\nX-Evil: 1");
+    }
+
+    public function testRejectsDotSegments(): void
+    {
+        $c = $this->client(200, '{"success":true,"data":{}}');
+        foreach (['..', '.', ''] as $bad) {
+            try {
+                $c->paymentStatus($bad);
+                self::fail('expected InvalidArgumentException for ' . json_encode($bad));
+            } catch (\InvalidArgumentException $e) {
+                self::assertStringContainsString('invalid id', $e->getMessage());
+            }
+        }
+        self::assertCount(0, $this->calls);
+
+        // Slashes inside an id stay encoded, so they cannot add path segments.
+        $c->getTransactionByExternalId('../../account');
+        self::assertSame('https://api.test/api/v2/transactions/external/..%2F..%2Faccount', $this->calls[0]['url']);
+    }
+
+    public function testRejectsNonPositiveIds(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->client(200, '{"success":true,"data":{}}')->getWithdrawal(0);
+    }
+
+    public function testBaseUrlMustBeHttps(): void
+    {
+        foreach (['http://api.example.com/api/v2', 'file:///etc/passwd', 'ftp://x/y', 'https://user:pw@x/api', 'not a url'] as $bad) {
+            try {
+                new Client('sk_test', ['base_url' => $bad]);
+                self::fail('expected InvalidArgumentException for ' . $bad);
+            } catch (\InvalidArgumentException $e) {
+                self::assertStringContainsString('base_url', $e->getMessage());
+            }
+        }
+
+        // Plain http is fine for local development.
+        new Client('sk_test', ['base_url' => 'http://localhost:8080/api/v2']);
+        new Client('sk_test', ['base_url' => 'http://127.0.0.1/api/v2']);
+        self::assertTrue(true);
+    }
+
+    public function testApiKeyHiddenFromDumps(): void
+    {
+        $c = new Client('sk_live_secret');
+        self::assertStringNotContainsString('sk_live_secret', print_r($c, true));
+    }
+
+    public function testLongErrorMessageIsTruncated(): void
+    {
+        $c = $this->client(500, json_encode(['message' => str_repeat('x', 5000)]));
+        try {
+            $c->getAccount();
+            self::fail('expected exception');
+        } catch (SaranaException $e) {
+            self::assertLessThan(400, strlen($e->getMessage()));
+            self::assertSame(5000 + strlen('{"message":""}'), strlen($e->getBody()));
+        }
+    }
 }

@@ -1,10 +1,23 @@
 # sarana-php
 
-Client PHP untuk API pembayaran Sarana (`/api/v2`). Butuh PHP 7.4 ke atas dengan `ext-curl` dan `ext-json`, tanpa dependency lain.
+Client PHP untuk API pembayaran Sarana (`/api/v2`). Butuh PHP 8.2 ke atas dengan `ext-curl` dan `ext-json`, tanpa dependency lain.
 
 ```bash
 composer require saranatechnology/sarana-php
 ```
+
+> **Keamanan runtime PHP.** Composer hanya mengecek versi minor, bukan patch. Pastikan server kamu menjalankan rilis yang sudah menambal PHP2Shell (CVE-2026-109618 dan CVE-2026-109619): **8.2.35, 8.3.36, 8.4.27, 8.5.12**, atau yang lebih baru. PHP 8.1 ke bawah sudah EOL dan tidak mendapat rilis resmi. PHP 8.2 EOL pada 31 Desember 2026.
+
+### Perilaku keamanan client
+
+- `base_url` wajib `https`. `http` hanya diizinkan untuk `localhost` atau `127.0.0.1` saat development.
+- Redirect tidak diikuti, supaya `X-API-Key` tidak terkirim ke host lain.
+- Verifikasi TLS selalu aktif dan protokol dibatasi ke http(s).
+- API key, `sub_id`, dan `sub_ref` yang berisi CR/LF atau karakter kontrol ditolak (mencegah header injection).
+- Id `""`, `.`, dan `..` ditolak, dan `/` di dalam id selalu di-encode, jadi id tidak bisa berpindah ke endpoint lain.
+- API key tidak ikut tampil di `var_dump()` atau `print_r()`.
+
+Upgrade dari 0.1.x: kode yang sudah ada tidak perlu diubah selama berjalan di PHP 8.2+ dan `base_url`-nya https. Input yang sebelumnya diterima diam-diam tetapi tidak valid sekarang melempar `InvalidArgumentException`.
 
 ## Pakai
 
